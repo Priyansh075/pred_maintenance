@@ -11,14 +11,8 @@ model = joblib.load('model.pkl')
 scaler = joblib.load('scaler.pkl')
 label_encoder = joblib.load('label_encoder.pkl')
 
-# Feature names for reference
-FEATURE_NAMES = [
-    'Air temperature [K]',
-    'Process temperature [K]',
-    'Rotational speed [rpm]',
-    'Torque [Nm]',
-    'Tool wear [min]'
-]
+# Load expected feature names from training
+FEATURE_NAMES = joblib.load('feature_names.pkl')
 
 @app.route('/api/predict', methods=['POST'])
 def predict():
@@ -27,6 +21,7 @@ def predict():
 
     Expected JSON body:
     {
+        "type": "L",
         "air_temperature": 298.1,
         "process_temperature": 308.6,
         "rotational_speed": 1551,
@@ -38,7 +33,7 @@ def predict():
         data = request.get_json()
 
         # Validate input
-        required_fields = ['air_temperature', 'process_temperature',
+        required_fields = ['type', 'air_temperature', 'process_temperature',
                           'rotational_speed', 'torque', 'tool_wear']
 
         for field in required_fields:
@@ -47,13 +42,29 @@ def predict():
                     'error': f'Missing required field: {field}'
                 }), 400
 
-        # Create feature array in correct order
+        # Create engineered features
+        temp_diff = data['process_temperature'] - data['air_temperature']
+        power = data['rotational_speed'] * data['torque']
+        strain = data['tool_wear'] * data['torque']
+        
+        # Dummy encoded 'Type' attributes
+        type_H = 1 if data['type'] == 'H' else 0
+        type_L = 1 if data['type'] == 'L' else 0
+        type_M = 1 if data['type'] == 'M' else 0
+
+        # Create feature array in exact order used during training
         features = np.array([[
             data['air_temperature'],
             data['process_temperature'],
             data['rotational_speed'],
             data['torque'],
-            data['tool_wear']
+            data['tool_wear'],
+            type_H,
+            type_L,
+            type_M,
+            temp_diff,
+            power,
+            strain
         ]])
 
         # Scale features

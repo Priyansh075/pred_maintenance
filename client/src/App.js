@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 function App() {
   const [formData, setFormData] = useState({
+    type: 'L',
     air_temperature: '',
     process_temperature: '',
     rotational_speed: '',
@@ -34,6 +35,7 @@ function App() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          type: formData.type,
           air_temperature: parseFloat(formData.air_temperature),
           process_temperature: parseFloat(formData.process_temperature),
           rotational_speed: parseFloat(formData.rotational_speed),
@@ -69,6 +71,21 @@ function App() {
 
       <div className="card">
         <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="type">Product Quality Type</label>
+            <select
+              id="type"
+              name="type"
+              value={formData.type}
+              onChange={handleChange}
+              required
+            >
+              <option value="L">Low (L)</option>
+              <option value="M">Medium (M)</option>
+              <option value="H">High (H)</option>
+            </select>
+          </div>
+
           <div className="form-group">
             <label htmlFor="air_temperature">Air Temperature (K)</label>
             <input
